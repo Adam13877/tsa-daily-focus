@@ -1,0 +1,15 @@
+{
+  "date": "2026-03-14",
+  "focuses": {
+    "Alex Bahnsen": {
+      "focus": "Ask",
+      "say": "Based on what we have discussed, this option fits best — would you like me to go ahead today?",
+      "target": "Ask on 100% of eligible calls (min 5)"
+    },
+    "Brooke Ruge": {
+      "focus": "Wrap",
+      "say": "I have taken care of that today. Next steps are...",
+      "target": "Clear recap & next steps on 100% of calls; keep ACW <= 45s"
+    }
+  }
+}
