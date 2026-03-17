@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Adam's Copilots — Daily Focus (CED)</title>
+
+
+
+<style>
+  :root{ --bg:#0b1020; --panel:#0f172a; --ink:#e6eefb; --muted:#9db0d1; --line:#1d2842; --accent:#5dd3ff;
+         --success:#82f7b7; --warn:#ffd166; --danger:#ff7b7b; }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% 10%,#15203b 0,#0b1020 50%,#070b16 100%);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Arial}
+  header{position:relative;overflow:hidden;background:#0b1020;border-bottom:1px solid var(--line)}
+  .hero{position:relative;padding:22px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:64px;height:64px;border-radius:50%;background:#0b1020 center/cover no-repeat;border:2px solid #203056;box-shadow:0 0 0 4px rgba(32,48,86,.35),inset 0 0 24px rgba(93,211,255,.2)}
+  .title{font-size:22px;font-weight:800;letter-spacing:.3px}
+  .subtitle{font-size:13px;color:var(--muted)}
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#0a1226;border:1px solid #233a66;border-radius:999px;padding:6px 10px}
+  main{max-width:1080px;margin:0 auto;padding:16px}
+  .card{background:linear-gradient(180deg,rgba(22,32,58,.85),rgba(14,20,38,.9));border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0;backdrop-filter:blur(4px)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row-end{justify-content:space-between;margin-top:8px}
+  label{display:block;color:var(--muted);margin-top:6px}
+  input,select,button{background:#0a1226;color:var(--ink);border:1px solid #223457;border-radius:10px;padding:8px 10px}
+  button{cursor:pointer}
+  .cta{background:#102a3d;border:1px solid #2b6a83}
+  .cta:hover{background:#12374e}
+  .focus-card{border:1px dashed #2b3f66;border-radius:12px;padding:14px;background:linear-gradient(180deg,#0c1730,#0a1428)}
+  .focus-title{font-size:20px;font-weight:800;color:var(--accent);margin:0 0 6px}
+  .steps{display:grid;gap:8px;margin-top:10px}
+  .step{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #233a66;border-radius:10px;background:#0a1226}
+  .step input{transform:scale(1.2)}
+  .anchor{color:#9db0d1;font-size:12px;margin-left:auto}
+  .doneBanner{display:none;margin-top:12px;padding:12px;border-radius:12px;border:1px solid #275a39;background:#112b1f;color:#bff3d3;font-weight:700}
+  .small{font-size:12px}
+  .muted{color:var(--muted)}
+  .danger{background:#2a0f14;border:1px solid #61242d;color:#ffb0b0}
+  .danger:hover{background:#3a141a}
+  .success{background:#0f2a1a;border:1px solid #1e6a48;color:#bff3d3}
+  .success:hover{background:#123728}
+
+
+
+  /* Flight path (progress) */
+  .flight{margin:12px 0 8px;border:1px solid #233a66;border-radius:12px;padding:12px;background:linear-gradient(180deg,#0b142c,#0a1226)}
+  .flight-wrap{position:relative;height:94px}
+  .flight-line{position:absolute;left:12px;right:12px;top:42px;height:4px;border-radius:3px;background:linear-gradient(90deg,#1b2c4f,#2a4f77,#1b2c4f)}
+  .waypoints{position:absolute;left:12px;right:12px;top:44px;transform:translateY(-50%);display:flex;justify-content:space-between}
+  .wp{position:relative;width:26px;height:26px;border-radius:50%;border:1px solid #2b3f66;background:#0a1226;display:flex;align-items:center;justify-content:center;font-size:12px;color:#9db0d1}
+  .wp.done{background:linear-gradient(180deg,#0f3,#0b7f4a);color:#022a16;border-color:#1c5}
+  .wp.crash{background:linear-gradient(180deg,#ff8c8c,#7f0b0b);color:#2a0202;border-color:#b33}
+  .wp-label{position:absolute;left:50%;transform:translateX(-50%);top:32px;white-space:nowrap;font-size:11px;color:#9db0d1;opacity:.9}
+  .plane{position:absolute;top:42px;left:0;transform:translate(-50%,-150%) rotate(6deg);transition:left .45s cubic-bezier(.2,.8,.2,1), transform .3s;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+  .plane.wiggle{animation:wiggle .8s ease-in-out 1}
+  @keyframes wiggle{0%{transform:translate(-50%,-150%) rotate(6deg)}50%{transform:translate(-50%,-170%) rotate(12deg)}100%{transform:translate(-50%,-150%) rotate(6deg)}}
+  .step.locked{opacity:.55;filter:saturate(.6)}
+  .step.next{box-shadow:0 0 0 1px rgba(93,211,255,.35),0 0 18px rgba(93,211,255,.25) inset;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%{outline:1px solid rgba(93,211,255,.3)}50%{outline:1px solid rgba(93,211,255,.8)}100%{outline:1px solid rgba(93,211,255,.3)}}
+  .step.crash{border-color:#762e2e;background:linear-gradient(180deg,#1b0d0f,#12090b);box-shadow:0 0 0 1px rgba(255,123,123,.25),0 0 18px rgba(255,123,123,.15) inset}
+  .step-num{background:#0e1b33;border:1px solid #2b3f66;color:#9db0d1;border-radius:8px;padding:2px 6px;font-size:11px}
+  .plane-ico{font-size:16px}
+  .grow{flex:1}
+
+
+
+  /* Right rail live log */
+  .rail{position:sticky; top:12px; min-width:280px; max-width:320px; margin-left:16px}
+  .rail .box{background:#0a1226;border:1px solid #233a66;border-radius:12px;padding:10px}
+  .rail h4{margin:0 0 8px;font-size:14px;color:#9db0d1}
+  .rail pre{white-space:pre-wrap;word-break:break-word;font:12px/1.4 ui-monospace,Consolas,monospace;color:#cfe7ff}
+</style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div class="brand">
+      <div class="logo" title="Adam's Copilots" id="logo"></div>
+      <div>
+        <div class="title">Adam's Copilots</div>
+        <div class="subtitle" id="greeting">Fly high, dream big — daily focus that sticks.</div>
+      </div>
+    </div>
+    <div class="pill">Local: <span id="today"></span></div>
+  </div>
+</header>
+
+
+
+<main style="display:flex;align-items:flex-start;gap:12px">
+  <section style="flex:1 1 auto; min-width:0">
+    <section class="card">
+      <h2>Choose your name</h2>
+      <div class="row">
+        <label>Your name
+          <select id="agentSel"></select>
+        </label>
+        <button id="loadBtn" class="cta">Show my focus</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+      <p class="small muted">This page loads your daily card from <b>focus.json</b> on GitHub.</p>
+    </section>
+
+
+
+    <section class="card" id="cardWrap" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <div class="pill">Agent: <b id="agName"></b></div>
+        <div class="pill">Plan date: <span id="planDate"></span></div>
+        <div class="pill">Landed today: <b id="landCount">0</b></div>
+      </div>
+
+
+
+      <div class="focus-card" style="margin-top:12px">
+        <div class="focus-title" id="focusTitle">Today's Focus</div>
+        <div id="focusSay" style="margin-top:6px"></div>
+        <div id="focusTarget" style="margin-top:6px"></div>
+      </div>
+
+
+
+      <h3 style="margin:14px 0 8px">CED — Customer Experience Drivers</h3>
+
+
+
+      <!-- Flight path (aria-hidden removed) -->
+      <div id="flight" class="flight">
+        <div id="flightWrap" class="flight-wrap">
+          <div class="flight-line"></div>
+          <div class="waypoints" id="wps"></div>
+          <div id="plane" class="plane" title="Your progress">✈️</div>
+        </div>
+        <div class="row row-end">
+          <div class="pill small">Leg <span id="legNow">0</span>/5</div>
+          <div class="row" style="gap:8px">
+            <button id="landBtn" class="success" title="Submit to Forms & finish" disabled>🛬 Submit & land</button>
+            <button id="resetDayBtn" class="danger" title="Reset today's landing counter and steps">Reset my day</button>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div id="steps" class="steps"></div>
+      <div id="doneBanner" class="doneBanner"></div>
+    </section>
+  </section>
+
+
+
+  <!-- Right rail with live times captured -->
+  <aside class="rail">
+    <div class="box">
+      <h4>Live log (copied on Submit)</h4>
+      <pre id="liveLog">(waiting…)</pre>
+    </div>
+    <div class="box" style="margin-top:10px">
+      <h4>Tip</h4>
+      <div class="small muted">
+        On <b>🛬 Submit & land</b> we copy the summary to your clipboard and open the Form.<br>
+        Paste into the <b>Details</b> field and press <b>Submit</b>.
+      </div>
+    </div>
+  </aside>
+</main>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  'use strict';
+
+
+
+  // === IMAGE (GitHub RAW) ===
+  const IMG_URL = "https://raw.githubusercontent.com/Adam13877/tsa-daily-focus/main/team-bg.jpg";
+  (function setLogoBackground(){
+    const el = document.getElementById('logo'); if(!el) return;
+    const urlWithBust = IMG_URL + (IMG_URL.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    const tester = new Image();
+    tester.onload = () => { el.style.background = `#0b1020 url('${urlWithBust}') center/cover no-repeat`; };
+    tester.onerror = () => { console.warn('Logo image failed to load:', IMG_URL); };
+    tester.src = urlWithBust;
+  })();
+
+
+
+  // === CONFIG ===
+  const FOCUS_URL = 'https://raw.githubusercontent.com/Adam13877/tsa-daily-focus/refs/heads/main/focus.json';
+  const FORMS_URL = 'https://forms.microsoft.com/Pages/ResponsePage.aspx?id=AHuEfbKci06fFPtY3kvN3uTbJzTSFgVFpM_WCmvCMVVUMkdRMzJaVlMxUVgxQzVRREdJWUhOQUJBWi4u';
+
+
+
+  // Team roster
+  const TEAM = [
+    'Alex Bahnsen','Brooke Ruge','Charanpreet kaur','Dona Hettiarachi','Ebtihaj Ismail',
+    'Esha Awan','Haifaa Hussien','Kerem Ozdovenci','Muntaha Qureshi','Poonam Parjapti',
+    'Afifa Faheem','Ruby Stewart','Ryan webster','Sean O\'keefe','Yasmin Sheikh'
+  ];
+
+
+
+  // Labels & default anchors
+  const FOCUS = {
+    Welcome: {label:'Welcome & understand needs', say:'Before we jump in, what would you like to get sorted today?', target:'Set needs early on 100% of calls'},
+    IDAgenda:{label:'Identity & set agenda',      say:'I will confirm a couple of details, then outline what we will cover together.', target:'Outline plan on 100% of calls; keep AHT controlled'},
+    LOB:     {label:'Review list of business',    say:'Let me make sure everything you have is still right for you.', target:'Complete LOB check on 100% of calls; avoid unnecessary holds'},
+    Ask:     {label:'Recommend & ask for next step', say:'Based on what we have discussed, this option fits best — would you like me to go ahead today?', target:'Ask on 100% of eligible calls (min 5)'},
+    Wrap:    {label:'Wrap up & survey',           say:'I have taken care of that today. Next steps are... You may receive a short survey — your feedback helps.', target:'Clear recap & next steps on 100% of calls; keep ACW <= 45s'}
+  };
+
+
+
+  const STEPS = [
+    {key:'Welcome', txt:'Welcome & understand needs', anchor:FOCUS.Welcome.say},
+    {key:'IDAgenda',txt:'Identity & set agenda', anchor:FOCUS.IDAgenda.say},
+    {key:'LOB',     txt:'Policy / LOB review', anchor:FOCUS.LOB.say},
+    {key:'Ask',     txt:'Recommend & ask for the business', anchor:FOCUS.Ask.say},
+    {key:'Wrap',    txt:'Wrap up & NPS', anchor:FOCUS.Wrap.say}
+  ];
+
+
+
+  const WP_LABELS = ['Welcome','ID & Agenda','Policy Review','Recommend & Ask','Wrap & NPS'];
+
+
+
+  const $ = id => document.getElementById(id);
+
+
+
+  // --- Time helpers
+  function localDateKey(d=new Date()){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  }
+  function formatLocalNow(){
+    const d = new Date();
+    const ds = new Intl.DateTimeFormat(undefined,{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).format(d);
+    const ts = new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(d);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    return { local:`${ds} • ${ts} ${tz}`, iso:d.toISOString(), tz, tzOffsetMin:-d.getTimezoneOffset() };
+  }
+  function tickClock(){ $('today').textContent = formatLocalNow().local; }
+  tickClock(); setInterval(tickClock, 30*1000);
+
+
+
+  // Build agent list
+  const sel = $('agentSel');
+  TEAM.forEach(n => { const o=document.createElement('option'); o.textContent=n; o.value=n; sel.appendChild(o); });
+
+
+
+  // Events
+  sel.addEventListener('change', showCard);
+  $('loadBtn').addEventListener('click', showCard);
+  $('refreshBtn').addEventListener('click', () => { const n = $('agName').textContent; if(n) loadFocusFor(n, true); });
+
+
+
+  // Support ?agent=Name
+  const qs = new URLSearchParams(location.search);
+  const agentParam = qs.get('agent'); if(agentParam){ selectAgent(agentParam); showCard(); }
+  function selectAgent(name){ for(const opt of sel.options){ if(opt.value===name){ sel.value=name; break; }}}
+
+
+
+  // Fetch focus.json
+  async function fetchFocus(){
+    const url = FOCUS_URL + (FOCUS_URL.includes('?') ? '&' : '?') + 'x=' + Date.now();
+    const res = await fetch(url, {cache:'no-store', credentials:'omit', mode:'cors'});
+    if(!res.ok) throw new Error('focus.json HTTP ' + res.status);
+    const text = await res.text();
+    try { return JSON.parse(text); } catch { throw new Error('Invalid JSON in focus.json'); }
+  }
+
+
+
+  async function loadFocusFor(agentName, silent){
+    try{
+      const data = await fetchFocus();
+      $('planDate').textContent = data.date || localDateKey();
+      const card = data.focuses && data.focuses[agentName];
+      if(!card){
+        $('focusTitle').textContent = 'No focus found for today';
+        $('focusSay').textContent = 'Ask your team lead to add your card.';
+        $('focusTarget').textContent = '';
+        $('cardWrap').style.display='block';
+        return;
+      }
+      const k = card.focus;
+      $('focusTitle').textContent = "Today's Focus: " + (FOCUS[k] ? FOCUS[k].label : k);
+      $('focusSay').innerHTML    = '<b>Say this:</b> ' + (card.say    || (FOCUS[k] && FOCUS[k].say)    || '');
+      $('focusTarget').innerHTML = '<b>Target:</b> '   + (card.target || (FOCUS[k] && FOCUS[k].target) || '');
+      $('cardWrap').style.display='block';
+      try{ localStorage.setItem('lastFocusPlan', JSON.stringify(data)); }catch(_){}
+    }catch(e){
+      try{
+        const cached = localStorage.getItem('lastFocusPlan');
+        if (cached) {
+          const data = JSON.parse(cached);
+          $('planDate').textContent = (data.date || localDateKey()) + ' (cached)';
+          const card = data.focuses && data.focuses[agentName];
+          if(card){
+            const k = card.focus;
+            $('focusTitle').textContent = "Today's Focus: " + (FOCUS[k] ? FOCUS[k].label : k) + ' (cached)';
+            $('focusSay').innerHTML    = '<b>Say this:</b> ' + (card.say    || (FOCUS[k] && FOCUS[k].say)    || '');
+            $('focusTarget').innerHTML = '<b>Target:</b> '   + (card.target || (FOCUS[k] && FOCUS[k].target) || '');
+            $('cardWrap').style.display='block';
+            return;
+          }
+        }
+      }catch(_){}
+      $('focusTitle').textContent = 'Cannot load focus.json';
+      $('focusSay').textContent = 'Check the GitHub raw URL in the file or your network.';
+      $('focusTarget').textContent = '';
+      $('cardWrap').style.display='block';
+      if(!silent) console.error(e);
+    }
+  }
+
+
+
+  // ===== Progress state & live timing capture =====
+  // state[i]: 0 not done, 1 done, -1 crash
+  const times = { steps: Array(STEPS.length).fill(null), crashes: Array(STEPS.length).fill(false), undos: [] };
+  function markTime(i, status){
+    const now = formatLocalNow(); // {local, iso, tz, tzOffsetMin}
+    if(status==='done'){ times.steps[i] = now; times.crashes[i]=false; }
+    if(status==='crash'){ times.steps[i] = now; times.crashes[i]=true; }
+    if(status==='undo'){ times.undos.push({i, when:now}); times.steps[i]=null; for(let j=i+1;j<STEPS.length;j++){ times.steps[j]=null; times.crashes[j]=false; } }
+    redrawLiveLog();
+  }
+  function redrawLiveLog(){
+    const a = $('agName').textContent || '(no agent)';
+    const d = $('planDate').textContent || localDateKey();
+    let out = `Agent: ${a}\nPlanDate: ${d}\n\nSteps (time • status):\n`;
+    for(let i=0;i<STEPS.length;i++){
+      const t = times.steps[i];
+      const status = t ? (times.crashes[i] ? 'CRASH' : 'DONE') : '—';
+      const ts = t ? `${t.local}` : '';
+      out += ` ${i+1}. ${STEPS[i].txt}  ${ts}  ${status}\n`;
+    }
+    if(times.undos.length){
+      out += `\nUndos:\n`;
+      times.undos.forEach(u => { out += `  #${u.i+1} at ${u.when.local}\n`; });
+    }
+    const z = formatLocalNow();
+    out += `\nNow: ${z.local}  (ISO ${z.iso})`;
+    $('liveLog').textContent = out;
+  }
+
+
+
+  function planKeyFor(agent){ const d = ($('planDate').textContent || localDateKey()).slice(0,10); return `ced_progress__${agent}__${d}`; }
+  function loadProgress(agent){
+    try{
+      const raw = localStorage.getItem(planKeyFor(agent));
+      const arr = raw ? JSON.parse(raw) : null;
+      if(Array.isArray(arr) && arr.length===STEPS.length){
+        if(typeof arr[0]==='boolean') return arr.map(b=>b?1:0);
+        return arr.map(v=>(v===1||v===-1)?v:0);
+      }
+    }catch(_){}
+    return new Array(STEPS.length).fill(0);
+  }
+  function saveProgress(agent, state){ try{ localStorage.setItem(planKeyFor(agent), JSON.stringify(state)); }catch(_){ } }
+
+
+
+  // Land counter per day
+  function todayKey(){ return localDateKey(); }
+  function landKey(agent){ return `landings__${agent}__${todayKey()}`; }
+  function getLandCount(agent){ try{ return Number(localStorage.getItem(landKey(agent)))||0; }catch(_){ return 0; } }
+  function setLandCount(agent, n){ try{ localStorage.setItem(landKey(agent), String(n)); }catch(_){} }
+  function incLand(agent){ const c=getLandCount(agent)+1; setLandCount(agent,c); return c; }
+  function resetDay(agent){ setLandCount(agent,0); try{ localStorage.removeItem(planKeyFor(agent)); }catch(_){} times.steps.fill(null); times.crashes.fill(false); times.undos=[]; redrawLiveLog(); }
+
+
+
+  // Flight visuals
+  let waypointCenters = [];
+  function buildWaypoints(){
+    const wps = $('wps'); if(!wps) return; wps.innerHTML=''; waypointCenters=[];
+    for(let i=0;i<STEPS.length;i++){
+      const dot = document.createElement('div'); dot.className = 'wp'; dot.textContent = i+1; dot.setAttribute('data-i', i);
+      const label = document.createElement('div'); label.className = 'wp-label'; label.textContent = WP_LABELS[i]; dot.appendChild(label);
+      wps.appendChild(dot);
+    }
+    requestAnimationFrame(()=>{
+      const dots=[...wps.children]; const wrapRect=$('flightWrap').getBoundingClientRect();
+      waypointCenters = dots.map(d => { const r=d.getBoundingClientRect(); return (r.left-wrapRect.left)+(r.width/2); });
+      if(waypointCenters.length){ $('plane').style.left = waypointCenters[0] + 'px'; }
+    });
+  }
+  function updateFlight(state){
+    const plane = $('plane'); const legNow=$('legNow'); const wps = $('wps')?.children||[];
+    for(let i=0;i<wps.length;i++){ wps[i].classList.remove('done','crash'); if(state[i]===1) wps[i].classList.add('done'); if(state[i]===-1) wps[i].classList.add('crash'); }
+    const progressed = state.filter(v=>v!==0).length;
+    let idx; if(progressed<=0) idx=0; else if(progressed>=STEPS.length) idx=STEPS.length-1; else idx=progressed;
+    if(!waypointCenters.length){ buildWaypoints(); requestAnimationFrame(()=>updateFlight(state)); return; }
+    idx = Math.max(0, Math.min(idx, waypointCenters.length-1));
+    plane.classList.remove('wiggle'); requestAnimationFrame(()=>{ plane.style.left = waypointCenters[idx] + 'px'; plane.classList.add('wiggle'); });
+    if(legNow) legNow.textContent = String(Math.min(progressed, STEPS.length));
+  }
+
+
+
+  // Enable landing once all steps are attempted (done or crashed)
+  function canLand(state){ return state.every(v => v !== 0); }
+  function allStepsCleanDone(state){ return state.every(v => v === 1); }
+
+
+
+  function renderSteps(agentName){
+    const wrap = $('steps'); wrap.innerHTML=''; buildWaypoints();
+    let state = loadProgress(agentName);
+    redrawLiveLog();
+
+
+
+    function refreshUI({scrollToNext=false}={}){
+      const rows = [...wrap.querySelectorAll('.step')];
+      rows.forEach((row, i)=>{
+        const cb = row.querySelector('input[type="checkbox"]');
+        const crashBtn = row.querySelector('button[data-crash]');
+        cb.checked = (state[i]===1);
+        row.classList.toggle('crash', state[i]===-1);
+        const locked = (i>0 && state[i-1]===0);
+        cb.disabled = locked; crashBtn.disabled = locked;
+        row.classList.toggle('locked', locked); row.classList.remove('next');
+        let ico = row.querySelector('.plane-ico');
+        if(!ico){ ico = document.createElement('span'); ico.className='plane-ico'; ico.setAttribute('aria-hidden','true'); ico.textContent='✈️'; row.insertBefore(ico, cb); }
+        ico.textContent = state[i]===1 ? '🛬' : (state[i]===-1 ? '💥' : '✈️');
+      });
+
+
+
+      // Highlight next actionable
+      const nextIdx = state.indexOf(0) === -1 ? STEPS.length : state.indexOf(0);
+      const targetRow = wrap.querySelector(`#cb_${nextIdx}`)?.closest('.step');
+      if(targetRow){ targetRow.classList.add('next'); if(scrollToNext){ setTimeout(()=>{ targetRow.scrollIntoView({behavior:'smooth', block:'center'}); }, 160); } }
+
+
+
+      updateFlight(state);
+      saveProgress(agentName, state);
+
+
+
+      const landBtn = $('landBtn');
+      landBtn.disabled = !canLand(state);
+
+
+
+      if(allStepsCleanDone(state)){
+        const banner=$('doneBanner');
+        banner.textContent = `Beautiful landing, ${agentName}! Smooth and safe. 🛬`;
+        banner.style.display='block'; setTimeout(()=>{ banner.style.display='none'; }, 4000);
+      }
+    }
+
+
+
+    // Build rows
+    STEPS.forEach((s,i)=>{
+      const row = document.createElement('div'); row.className = 'step';
+      row.innerHTML = `
+        <span class="step-num">${i+1}</span>
+        <span class="plane-ico" aria-hidden="true">✈️</span>
+        <input type="checkbox" id="cb_${i}">
+        <label for="cb_${i}" class="grow">${s.txt}</label>
+        <span class="anchor">Anchor: ${s.anchor}</span>
+        <button class="danger" data-crash title="Skip this step and mark crash">Crash landing</button>
+      `;
+      const cb = row.querySelector('input');
+      const crashBtn = row.querySelector('button[data-crash]');
+
+
+
+      cb.addEventListener('change', ()=>{
+        if(cb.checked){
+          state[i] = 1; markTime(i,'done');
+          refreshUI({scrollToNext:true});
+        }else{
+          for(let j=i;j<STEPS.length;j++) state[j]=0;
+          markTime(i,'undo');
+          refreshUI({scrollToNext:false});
+        }
+      });
+
+
+
+      crashBtn.addEventListener('click', ()=>{
+        state[i] = -1; for(let j=i+1;j<STEPS.length;j++) state[j]=0;
+        markTime(i,'crash');
+        refreshUI({scrollToNext:true});
+      });
+
+
+
+      wrap.appendChild(row);
+    });
+
+
+
+    refreshUI();
+
+// ================================
+// 🛬 SUBMIT & LAND — NETLIFY FORMS
+// ================================
+$('landBtn').onclick = () => {
+  if (!canLand(state)) {
+    alert('Touch every CED step (done or crashed) before submitting.');
+    return;
+  }
+
+  const agentName = $('agName').textContent;
+  const planDate  = $('planDate').textContent;
+
+  // increment landing counter
+  const count = incLand(agentName);
+  $('landCount').textContent = String(count);
+
+  const now = formatLocalNow();
+
+  // get Netlify form
+  const form = document.querySelector('form[name="ced-log"]');
+  if (!form) {
+    alert('Logging form not found. Please contact admin.');
+    return;
+  }
+
+  // populate hidden fields
+  form.querySelector('[name="Agent"]').value = agentName;
+  form.querySelector('[name="Action"]').value = 'LAND';
+  form.querySelector('[name="StepKey"]').value = 'ALL';
+  form.querySelector('[name="StepIndex"]').value = String(STEPS.length);
+  form.querySelector('[name="PlanDate"]').value = planDate;
+  form.querySelector('[name="LocalDate"]').value = now.local.split(' • ')[0];
+  form.querySelector('[name="LocalTime"]').value =
+    now.local.split(' • ')[1]?.split(' ')[0] || '';
+  form.querySelector('[name="ISOTime"]').value = now.iso;
+  form.querySelector('[name="Timezone"]').value = now.tz;
+  form.querySelector('[name="TimezoneOffset"]').value = String(now.tzOffsetMin);
+  form.querySelector('[name="LandCount"]').value = String(count);
+
+  // submit silently
+  form.submit();
+
+  // reset for next call (UNCHANGED LOGIC)
+  state = new Array(STEPS.length).fill(0);
+  saveProgress(agentName, state);
+  times.steps.fill(null);
+  times.crashes.fill(false);
+  times.undos = [];
+  updateFlight(state);
+  redrawLiveLog();
+  renderSteps(agentName);
+};
+
+    window.addEventListener('resize', () => { buildWaypoints(); setTimeout(()=>updateFlight(state), 50); }, {passive:true});
+  }
+
+
+
+  function setGreeting(name){
+    const lines = [
+      'You\'ve got this, {name}. Clear, calm and confident. 💪',
+      'Every call is a chance to delight, {name}. ✨',
+      'Stay curious, lead the pace — nice and steady, {name}.',
+      'Today\'s a great day to wow a customer, {name}. 🌟',
+      'Keep it human, keep it helpful — fly well, {name}. 🛩️'
+    ];
+    $('greeting').textContent = lines[Math.floor(Math.random()*lines.length)].replace('{name}', name||'');
+  }
+
+
+
+  async function showCard(){
+    const name = sel.value; if(!name) return;
+    $('agName').textContent = name;
+    setGreeting(name);
+    await loadFocusFor(name);
+    $('landCount').textContent = String(getLandCount(name));
+    renderSteps(name);
+  }
+});
+</script>
+
+<form name="ced-log" method="POST" data-netlify="true" hidden>
+  <input type="hidden" name="Agent">
+  <input type="hidden" name="Action">
+  <input type="hidden" name="StepKey">
+  <input type="hidden" name="StepIndex">
+  <input type="hidden" name="PlanDate">
+  <input type="hidden" name="LocalDate">
+  <input type="hidden" name="LocalTime">
+  <input type="hidden" name="ISOTime">
+  <input type="hidden" name="Timezone">
+  <input type="hidden" name="TimezoneOffset">
+  <input type="hidden" name="LandCount">
+</form>
+
+</body>
+</html>
+ 
